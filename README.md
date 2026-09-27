@@ -22,13 +22,16 @@ python3 -m unittest discover -s tests -v
   不同子串数等于 `n(n+1)/2` 减去 LCP 之和；空文本返回空结果。
 - 规模：10 万字符的文本要在 O(n log n) 时间、O(n) 内存内建好后缀数组与 LCP。
 
-## 现在的行为
+## 实现方式
 
-- `suffixes` 切出全部后缀再 `sort()`：`--generate 2000` 的 `copied=2001000`，
-  `--generate 20000` 的 `copied=200010000`（两亿），都是 O(n²)。
-- `longest_repeated` 返回**第一个非零 LCP** 对应的子串，而不是最大值：`banana` 给 `a`、`mississippi` 给 `i`。
-- `substring_count` 对每个起点做 `startswith`：值对，但比较次数是 O(n × 模式长度)。
-- `unique_suffixes` 把所有子串塞进 `set`：O(n²) 内存。
+- `suffixes` 用前缀倍增（doubling + 排名）建后缀数组：O(n log n) 时间、O(n) 内存。
+  `--generate 2000` 的 `copied` 在几万以内，`--generate 100000` 约 1.8e6（n log n 同阶）。
+- `longest_repeated` 取 LCP 数组最大值对应的子串：`banana` 给 `ana`、`mississippi` 给 `issi`。
+- `lcp_array` 用 Kasai 式均摊线性算法，相邻后缀比较利用上一对的结果。
+- `substring_count` 在后缀数组上二分，单次 O(m log n)。
+- `unique_suffixes` 用 `n(n+1)/2 - sum(LCP)`，内存 O(n)。
+- `suffixarray/naive.py` 是朴素参考实现（切片排序 + 逐对重比 LCP），测试用它对
+  样例与 1000 份随机文本逐项比对后缀数组、LCP、最长重复子串与计数。
 
 ## 计划新增的能力
 
@@ -51,5 +54,6 @@ n=… copied=… compared=…
 ```
 suffixarray/build.py   后缀数组、LCP、计数
 suffixarray/cli.py     命令行入口
+suffixarray/naive.py   朴素参考实现（仅测试对照用）
 tests/                 unittest 用例
 ```
